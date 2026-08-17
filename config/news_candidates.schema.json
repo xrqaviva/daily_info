@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["candidates"],
+  "properties": {
+    "candidates": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "category",
+          "event_key",
+          "title",
+          "summary",
+          "publisher",
+          "published_at",
+          "url"
+        ],
+        "properties": {
+          "category": {"type": "string"},
+          "event_key": {"type": "string"},
+          "title": {"type": "string"},
+          "summary": {"type": "string"},
+          "publisher": {"type": "string"},
+          "published_at": {"type": "string"},
+          "url": {"type": "string"}
+        }
+      }
+    }
+  }
+}

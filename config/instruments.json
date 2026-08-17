@@ -1,0 +1,1022 @@
+{
+  "schema_version": 1,
+  "instruments": {
+    "sp500": {
+      "label": "标普500",
+      "unit": "points",
+      "value_tolerance": 0.002,
+      "expected_session": "us_previous",
+      "sources": [
+        {
+          "kind": "tencent",
+          "symbol": "usINX",
+          "contract": "SPX cash index close"
+        },
+        {
+          "kind": "cboe",
+          "symbol": "SPX",
+          "contract": "SPX cash index close",
+          "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/SPX_History.csv"
+        }
+      ]
+    },
+    "nasdaq": {
+      "label": "纳斯达克综合",
+      "unit": "points",
+      "value_tolerance": 0.002,
+      "expected_session": "us_previous",
+      "sources": [
+        {
+          "kind": "tencent",
+          "symbol": "usIXIC",
+          "contract": "cash index close"
+        }
+      ]
+    },
+    "dow": {
+      "label": "道琼斯工业",
+      "unit": "points",
+      "value_tolerance": 0.002,
+      "expected_session": "us_previous",
+      "sources": [
+        {
+          "kind": "tencent",
+          "symbol": "usDJI",
+          "contract": "cash index close"
+        }
+      ]
+    },
+    "ftse100": {
+      "label": "英国富时100",
+      "unit": "points",
+      "value_tolerance": 0.002,
+      "expected_session": "international_previous",
+      "market_calendar": "uk",
+      "contract": "cash index close",
+      "sources": [
+        {
+          "kind": "tencent_gz",
+          "symbol": "FTSE",
+          "market_timezone": "Europe/London"
+        },
+        {
+          "kind": "eastmoney_global_history",
+          "symbol": "100.FTSE"
+        }
+      ]
+    },
+    "cac40": {
+      "label": "法国CAC40",
+      "unit": "points",
+      "value_tolerance": 0.002,
+      "expected_session": "international_previous",
+      "market_calendar": "euronext",
+      "contract": "cash index close",
+      "sources": [
+        {
+          "kind": "tencent_gz",
+          "symbol": "FCHI",
+          "market_timezone": "Europe/Paris"
+        },
+        {
+          "kind": "eastmoney_global_history",
+          "symbol": "100.FCHI"
+        }
+      ]
+    },
+    "dax": {
+      "label": "德国DAX",
+      "unit": "points",
+      "value_tolerance": 0.002,
+      "expected_session": "international_previous",
+      "market_calendar": "xetra",
+      "contract": "cash index close",
+      "sources": [
+        {
+          "kind": "tencent_gz",
+          "symbol": "GDAXI",
+          "market_timezone": "Europe/Berlin"
+        },
+        {
+          "kind": "eastmoney_global_history",
+          "symbol": "100.GDAXI"
+        }
+      ]
+    },
+    "dxy": {
+      "label": "美元指数",
+      "unit": "points",
+      "value_tolerance": 0.005,
+      "commodity": true,
+      "contract": "cash index close",
+      "expected_session": "us_previous",
+      "sources": [
+        {
+          "kind": "eastmoney_global_history",
+          "symbol": "100.UDI"
+        },
+        {
+          "kind": "sina_diniw",
+          "symbol": "DINIW",
+          "url": "https://hq.sinajs.cn/list=DINIW",
+          "contract": "cash index close"
+        }
+      ]
+    },
+    "usdcny": {
+      "label": "美元/人民币",
+      "unit": "CNY per USD",
+      "value_tolerance": 0.0035,
+      "sources": [
+        {
+          "kind": "boc",
+          "symbol": "usdcny"
+        },
+        {
+          "kind": "boe",
+          "symbol": "usdcny"
+        },
+        {
+          "kind": "ecb",
+          "symbol": "usdcny"
+        }
+      ]
+    },
+    "usdeur": {
+      "label": "美元/欧元",
+      "unit": "EUR per USD",
+      "value_tolerance": 0.0035,
+      "sources": [
+        {
+          "kind": "boc",
+          "symbol": "usdeur"
+        },
+        {
+          "kind": "boe",
+          "symbol": "usdeur"
+        },
+        {
+          "kind": "ecb",
+          "symbol": "usdeur"
+        }
+      ]
+    },
+    "usdjpy": {
+      "label": "美元/日元",
+      "unit": "JPY per USD",
+      "value_tolerance": 0.0035,
+      "sources": [
+        {
+          "kind": "boc",
+          "symbol": "usdjpy"
+        },
+        {
+          "kind": "boe",
+          "symbol": "usdjpy"
+        },
+        {
+          "kind": "ecb",
+          "symbol": "usdjpy"
+        }
+      ]
+    },
+    "usdgbp": {
+      "label": "美元/英镑",
+      "unit": "GBP per USD",
+      "value_tolerance": 0.0035,
+      "sources": [
+        {
+          "kind": "boc",
+          "symbol": "usdgbp"
+        },
+        {
+          "kind": "boe",
+          "symbol": "usdgbp"
+        },
+        {
+          "kind": "ecb",
+          "symbol": "usdgbp"
+        }
+      ]
+    },
+    "gold": {
+      "label": "COMEX黄金",
+      "unit": "USD/troy oz",
+      "commodity": true,
+      "contract": "front-month continuous",
+      "expected_session": "us_previous",
+      "sources": [
+        {
+          "kind": "eastmoney_global_history",
+          "symbol": "101.GC00Y"
+        },
+        {
+          "kind": "sina_global_history",
+          "symbol": "GC"
+        }
+      ]
+    },
+    "silver": {
+      "label": "COMEX白银",
+      "unit": "USD/troy oz",
+      "commodity": true,
+      "contract": "front-month continuous",
+      "expected_session": "us_previous",
+      "sources": [
+        {
+          "kind": "eastmoney_global_history",
+          "symbol": "101.SI00Y"
+        },
+        {
+          "kind": "sina_global_history",
+          "symbol": "SI"
+        }
+      ]
+    },
+    "spot_gold": {
+      "label": "现货黄金",
+      "unit": "USD/troy oz",
+      "commodity": true,
+      "contract": "spot",
+      "expected_session": "us_previous",
+      "sources": [
+        {
+          "kind": "sina_global_history",
+          "symbol": "XAU"
+        }
+      ]
+    },
+    "spot_silver": {
+      "label": "现货白银",
+      "unit": "USD/troy oz",
+      "commodity": true,
+      "contract": "spot",
+      "expected_session": "us_previous",
+      "sources": [
+        {
+          "kind": "sina_global_history",
+          "symbol": "XAG"
+        }
+      ]
+    },
+    "copper": {
+      "label": "COMEX铜",
+      "unit": "USD/lb",
+      "commodity": true,
+      "contract": "front-month continuous",
+      "expected_session": "us_previous",
+      "sources": [
+        {
+          "kind": "eastmoney_global_history",
+          "symbol": "101.HG00Y"
+        },
+        {
+          "kind": "sina_global_history",
+          "symbol": "HG",
+          "scale": 0.01
+        }
+      ]
+    },
+    "wti": {
+      "label": "WTI原油",
+      "unit": "USD/barrel",
+      "commodity": true,
+      "contract": "front-month continuous",
+      "expected_session": "us_previous",
+      "sources": [
+        {
+          "kind": "eastmoney_global_history",
+          "symbol": "102.CL00Y"
+        },
+        {
+          "kind": "sina_global_history",
+          "symbol": "CL"
+        }
+      ]
+    },
+    "lme_copper": {
+      "label": "LME铜",
+      "unit": "USD/tonne",
+      "commodity": true,
+      "contract": "供应商LME 3个月连续合约日收盘（非LME官方Closing Price）",
+      "expected_session": "international_previous",
+      "market_calendar": "lme",
+      "sources": [
+        {
+          "kind": "sina_global_history",
+          "symbol": "CAD"
+        }
+      ]
+    },
+    "lme_aluminum": {
+      "label": "LME铝",
+      "unit": "USD/tonne",
+      "commodity": true,
+      "contract": "供应商LME 3个月连续合约日收盘（非LME官方Closing Price）",
+      "expected_session": "international_previous",
+      "market_calendar": "lme",
+      "sources": [
+        {
+          "kind": "sina_global_history",
+          "symbol": "AHD"
+        }
+      ]
+    },
+    "lme_zinc": {
+      "label": "LME锌",
+      "unit": "USD/tonne",
+      "commodity": true,
+      "contract": "供应商LME 3个月连续合约日收盘（非LME官方Closing Price）",
+      "expected_session": "international_previous",
+      "market_calendar": "lme",
+      "sources": [
+        {
+          "kind": "sina_global_history",
+          "symbol": "ZSD"
+        }
+      ]
+    },
+    "lme_lead": {
+      "label": "LME铅",
+      "unit": "USD/tonne",
+      "commodity": true,
+      "contract": "供应商LME 3个月连续合约日收盘（非LME官方Closing Price）",
+      "expected_session": "international_previous",
+      "market_calendar": "lme",
+      "sources": [
+        {
+          "kind": "sina_global_history",
+          "symbol": "PBD"
+        }
+      ]
+    },
+    "lme_nickel": {
+      "label": "LME镍",
+      "unit": "USD/tonne",
+      "commodity": true,
+      "contract": "供应商LME 3个月连续合约日收盘（非LME官方Closing Price）",
+      "expected_session": "international_previous",
+      "market_calendar": "lme",
+      "sources": [
+        {
+          "kind": "sina_global_history",
+          "symbol": "NID"
+        }
+      ]
+    },
+    "lme_tin": {
+      "label": "LME锡",
+      "unit": "USD/tonne",
+      "commodity": true,
+      "contract": "供应商LME 3个月连续合约日收盘（非LME官方Closing Price）",
+      "expected_session": "international_previous",
+      "market_calendar": "lme",
+      "sources": [
+        {
+          "kind": "sina_global_history",
+          "symbol": "SND"
+        }
+      ]
+    },
+    "shfe_gold": {
+      "label": "上期所黄金",
+      "unit": "CNY/gram",
+      "commodity": true,
+      "contract": "main_continuous",
+      "expected_session": "a_previous",
+      "sources": [
+        {
+          "kind": "sina_futures",
+          "symbol": "AU0"
+        },
+        {
+          "kind": "eastmoney_futures",
+          "symbol": "113.aum"
+        }
+      ]
+    },
+    "shfe_silver": {
+      "label": "上期所白银",
+      "unit": "CNY/kg",
+      "commodity": true,
+      "contract": "main_continuous",
+      "expected_session": "a_previous",
+      "sources": [
+        {
+          "kind": "sina_futures",
+          "symbol": "AG0"
+        },
+        {
+          "kind": "eastmoney_futures",
+          "symbol": "113.agm"
+        }
+      ]
+    },
+    "shfe_copper": {
+      "label": "上期所铜",
+      "unit": "CNY/tonne",
+      "commodity": true,
+      "contract": "main_continuous",
+      "expected_session": "a_previous",
+      "sources": [
+        {
+          "kind": "sina_futures",
+          "symbol": "CU0"
+        },
+        {
+          "kind": "eastmoney_futures",
+          "symbol": "113.cum"
+        }
+      ]
+    },
+    "aluminum": {
+      "label": "上期所铝",
+      "unit": "CNY/tonne",
+      "commodity": true,
+      "contract": "main_continuous",
+      "expected_session": "a_previous",
+      "sources": [
+        {
+          "kind": "sina_futures",
+          "symbol": "AL0"
+        },
+        {
+          "kind": "eastmoney_futures",
+          "symbol": "113.alm"
+        }
+      ]
+    },
+    "shfe_zinc": {
+      "label": "上期所锌",
+      "unit": "CNY/tonne",
+      "commodity": true,
+      "contract": "main_continuous",
+      "expected_session": "a_previous",
+      "sources": [
+        {
+          "kind": "sina_futures",
+          "symbol": "ZN0"
+        },
+        {
+          "kind": "eastmoney_futures",
+          "symbol": "113.znm"
+        }
+      ]
+    },
+    "shfe_lead": {
+      "label": "上期所铅",
+      "unit": "CNY/tonne",
+      "commodity": true,
+      "contract": "main_continuous",
+      "expected_session": "a_previous",
+      "sources": [
+        {
+          "kind": "sina_futures",
+          "symbol": "PB0"
+        },
+        {
+          "kind": "eastmoney_futures",
+          "symbol": "113.pbm"
+        }
+      ]
+    },
+    "shfe_nickel": {
+      "label": "上期所镍",
+      "unit": "CNY/tonne",
+      "commodity": true,
+      "contract": "main_continuous",
+      "expected_session": "a_previous",
+      "sources": [
+        {
+          "kind": "sina_futures",
+          "symbol": "NI0"
+        },
+        {
+          "kind": "eastmoney_futures",
+          "symbol": "113.nim"
+        }
+      ]
+    },
+    "shfe_tin": {
+      "label": "上期所锡",
+      "unit": "CNY/tonne",
+      "commodity": true,
+      "contract": "main_continuous",
+      "expected_session": "a_previous",
+      "sources": [
+        {
+          "kind": "sina_futures",
+          "symbol": "SN0"
+        },
+        {
+          "kind": "eastmoney_futures",
+          "symbol": "113.snm"
+        }
+      ]
+    },
+    "ine_crude": {
+      "label": "上海原油",
+      "unit": "CNY/barrel",
+      "commodity": true,
+      "contract": "main_continuous",
+      "expected_session": "a_previous",
+      "sources": [
+        {
+          "kind": "sina_futures",
+          "symbol": "SC0"
+        },
+        {
+          "kind": "eastmoney_futures",
+          "symbol": "142.scm"
+        }
+      ]
+    },
+    "iron_ore": {
+      "label": "大商所铁矿石",
+      "unit": "CNY/tonne",
+      "commodity": true,
+      "contract": "main_continuous",
+      "expected_session": "a_previous",
+      "sources": [
+        {
+          "kind": "sina_futures",
+          "symbol": "I0"
+        },
+        {
+          "kind": "eastmoney_futures",
+          "symbol": "114.im"
+        }
+      ]
+    },
+    "tungsten": {
+      "label": "黑钨精矿≥65%（SMM）",
+      "unit": "CNY/metric-tonne-unit",
+      "commodity": true,
+      "max_age_days": 45,
+      "contract": "黑钨精矿≥65%",
+      "sources": [
+        {
+          "kind": "professional",
+          "provider": "smm",
+          "url": "https://hq.smm.cn/h5/tungsten-ore-price",
+          "contract": "黑钨精矿≥65%"
+        }
+      ]
+    },
+    "ferromolybdenum_smm": {
+      "label": "钼铁60%（SMM）",
+      "unit": "CNY/base-tonne",
+      "commodity": true,
+      "max_age_days": 14,
+      "contract": "钼铁60%",
+      "sources": [
+        {
+          "kind": "professional",
+          "provider": "smm",
+          "url": "https://hq.smm.cn/h5/ferromolybdenum-price",
+          "contract": "钼铁60%"
+        }
+      ]
+    },
+    "sectors": [
+      {
+        "name": "材料",
+        "symbol": "XLB",
+        "expected_session": "us_previous",
+        "contract": "US sector ETF close",
+        "sources": [
+          {
+            "kind": "tencent",
+            "symbol": "usXLB"
+          }
+        ]
+      },
+      {
+        "name": "通信服务",
+        "symbol": "XLC",
+        "expected_session": "us_previous",
+        "contract": "US sector ETF close",
+        "sources": [
+          {
+            "kind": "tencent",
+            "symbol": "usXLC"
+          }
+        ]
+      },
+      {
+        "name": "能源",
+        "symbol": "XLE",
+        "expected_session": "us_previous",
+        "contract": "US sector ETF close",
+        "sources": [
+          {
+            "kind": "tencent",
+            "symbol": "usXLE"
+          }
+        ]
+      },
+      {
+        "name": "金融",
+        "symbol": "XLF",
+        "expected_session": "us_previous",
+        "contract": "US sector ETF close",
+        "sources": [
+          {
+            "kind": "tencent",
+            "symbol": "usXLF"
+          }
+        ]
+      },
+      {
+        "name": "工业",
+        "symbol": "XLI",
+        "expected_session": "us_previous",
+        "contract": "US sector ETF close",
+        "sources": [
+          {
+            "kind": "tencent",
+            "symbol": "usXLI"
+          }
+        ]
+      },
+      {
+        "name": "信息技术",
+        "symbol": "XLK",
+        "expected_session": "us_previous",
+        "contract": "US sector ETF close",
+        "sources": [
+          {
+            "kind": "tencent",
+            "symbol": "usXLK"
+          }
+        ]
+      },
+      {
+        "name": "日常消费",
+        "symbol": "XLP",
+        "expected_session": "us_previous",
+        "contract": "US sector ETF close",
+        "sources": [
+          {
+            "kind": "tencent",
+            "symbol": "usXLP"
+          }
+        ]
+      },
+      {
+        "name": "房地产",
+        "symbol": "XLRE",
+        "expected_session": "us_previous",
+        "contract": "US sector ETF close",
+        "sources": [
+          {
+            "kind": "tencent",
+            "symbol": "usXLRE"
+          }
+        ]
+      },
+      {
+        "name": "公用事业",
+        "symbol": "XLU",
+        "expected_session": "us_previous",
+        "contract": "US sector ETF close",
+        "sources": [
+          {
+            "kind": "tencent",
+            "symbol": "usXLU"
+          }
+        ]
+      },
+      {
+        "name": "医疗保健",
+        "symbol": "XLV",
+        "expected_session": "us_previous",
+        "contract": "US sector ETF close",
+        "sources": [
+          {
+            "kind": "tencent",
+            "symbol": "usXLV"
+          }
+        ]
+      },
+      {
+        "name": "可选消费",
+        "symbol": "XLY",
+        "expected_session": "us_previous",
+        "contract": "US sector ETF close",
+        "sources": [
+          {
+            "kind": "tencent",
+            "symbol": "usXLY"
+          }
+        ]
+      }
+    ],
+    "supplemental": [
+      {
+        "kind": "tradingview",
+        "scanner": "america",
+        "symbols": [
+          "SP:SPX",
+          "NASDAQ:IXIC",
+          "TVC:DJI",
+          "AMEX:XLB",
+          "AMEX:XLC",
+          "AMEX:XLE",
+          "AMEX:XLF",
+          "AMEX:XLI",
+          "AMEX:XLK",
+          "AMEX:XLP",
+          "AMEX:XLRE",
+          "AMEX:XLU",
+          "AMEX:XLV",
+          "AMEX:XLY"
+        ]
+      },
+      {
+        "kind": "tradingview",
+        "scanner": "global",
+        "symbols": [
+          "TVC:DXY",
+          "FX_IDC:USDCNY",
+          "COMEX:GC1!",
+          "COMEX:SI1!",
+          "COMEX:HG1!",
+          "NYMEX:CL1!"
+        ]
+      }
+    ],
+    "antimony": {
+      "label": "1#锑锭（SMM）",
+      "unit": "CNY/tonne",
+      "commodity": true,
+      "max_age_days": 14,
+      "contract": "1#锑锭价格",
+      "sources": [
+        {
+          "kind": "professional",
+          "provider": "smm",
+          "url": "https://hq.smm.cn/h5/antimony-price",
+          "contract": "1#锑锭价格"
+        }
+      ]
+    },
+    "bismuth": {
+      "label": "精铋（SMM）",
+      "unit": "CNY/tonne",
+      "commodity": true,
+      "max_age_days": 14,
+      "contract": "精铋价格",
+      "sources": [
+        {
+          "kind": "professional",
+          "provider": "smm",
+          "url": "https://hq.smm.cn/h5/bismuth-price",
+          "contract": "精铋价格"
+        }
+      ]
+    },
+    "gallium": {
+      "label": "镓（SMM）",
+      "unit": "CNY/kg",
+      "commodity": true,
+      "max_age_days": 14,
+      "contract": "镓价格",
+      "sources": [
+        {
+          "kind": "professional",
+          "provider": "smm",
+          "url": "https://hq.smm.cn/h5/gallium-price",
+          "contract": "镓价格"
+        }
+      ]
+    },
+    "germanium": {
+      "label": "锗锭（SMM）",
+      "unit": "CNY/kg",
+      "commodity": true,
+      "max_age_days": 14,
+      "contract": "锗锭价格",
+      "sources": [
+        {
+          "kind": "professional",
+          "provider": "smm",
+          "url": "https://hq.smm.cn/h5/germanium-price",
+          "contract": "锗锭价格"
+        }
+      ]
+    },
+    "indium": {
+      "label": "精铟（SMM）",
+      "unit": "CNY/kg",
+      "commodity": true,
+      "max_age_days": 14,
+      "contract": "精铟价格",
+      "sources": [
+        {
+          "kind": "professional",
+          "provider": "smm",
+          "url": "https://hq.smm.cn/h5/indium-price",
+          "contract": "精铟价格"
+        }
+      ]
+    },
+    "magnesium": {
+      "label": "上海镁锭（SMM）",
+      "unit": "CNY/tonne",
+      "commodity": true,
+      "max_age_days": 14,
+      "contract": "上海镁锭价格",
+      "sources": [
+        {
+          "kind": "professional",
+          "provider": "smm",
+          "url": "https://hq.smm.cn/h5/magnesium-ingot-price",
+          "contract": "上海镁锭价格"
+        }
+      ]
+    },
+    "selenium": {
+      "label": "99.99%硒锭（SMM）",
+      "unit": "CNY/kg",
+      "commodity": true,
+      "max_age_days": 14,
+      "contract": "99.99%硒锭价格",
+      "sources": [
+        {
+          "kind": "professional",
+          "provider": "smm",
+          "url": "https://hq.smm.cn/h5/selenium-price",
+          "contract": "99.99%硒锭价格"
+        }
+      ]
+    },
+    "brent": {
+      "label": "布伦特原油",
+      "unit": "USD/barrel",
+      "commodity": true,
+      "expected_session": "international_previous",
+      "contract": "连续合约",
+      "sources": [
+        {
+          "kind": "hf_tencent",
+          "symbol": "OIL",
+          "contract": "连续合约"
+        }
+      ]
+    },
+    "natgas": {
+      "label": "美国天然气",
+      "unit": "USD/mmbtu",
+      "commodity": true,
+      "expected_session": "international_previous",
+      "contract": "连续合约",
+      "sources": [
+        {
+          "kind": "hf_tencent",
+          "symbol": "NG",
+          "contract": "连续合约"
+        }
+      ]
+    },
+    "platinum": {
+      "label": "纽约铂金",
+      "unit": "USD/oz",
+      "commodity": true,
+      "expected_session": "international_previous",
+      "contract": "连续合约",
+      "sources": [
+        {
+          "kind": "hf_tencent",
+          "symbol": "XPT",
+          "contract": "连续合约"
+        }
+      ]
+    },
+    "palladium": {
+      "label": "纽约钯金",
+      "unit": "USD/oz",
+      "commodity": true,
+      "expected_session": "international_previous",
+      "contract": "连续合约",
+      "sources": [
+        {
+          "kind": "hf_tencent",
+          "symbol": "XPD",
+          "contract": "连续合约"
+        }
+      ]
+    },
+    "us_stock_groups": {
+      "mag7": {
+        "name": "Mag7 七巨头",
+        "stocks": [
+          {
+            "name": "苹果",
+            "symbol": "usAAPL"
+          },
+          {
+            "name": "微软",
+            "symbol": "usMSFT"
+          },
+          {
+            "name": "谷歌A",
+            "symbol": "usGOOGL"
+          },
+          {
+            "name": "亚马逊",
+            "symbol": "usAMZN"
+          },
+          {
+            "name": "Meta",
+            "symbol": "usMETA"
+          },
+          {
+            "name": "英伟达",
+            "symbol": "usNVDA"
+          },
+          {
+            "name": "特斯拉",
+            "symbol": "usTSLA"
+          }
+        ]
+      },
+      "storage": {
+        "name": "美股存储三巨头",
+        "stocks": [
+          {
+            "name": "美光",
+            "symbol": "usMU"
+          },
+          {
+            "name": "闪迪",
+            "symbol": "usSNDK"
+          },
+          {
+            "name": "希捷",
+            "symbol": "usSTX"
+          }
+        ]
+      },
+      "cpo": {
+        "name": "美股光模块/CPO",
+        "stocks": [
+          {
+            "name": "Lumentum",
+            "symbol": "usLITE"
+          },
+          {
+            "name": "Coherent",
+            "symbol": "usCOHR"
+          },
+          {
+            "name": "应用光电",
+            "symbol": "usAAOI"
+          },
+          {
+            "name": "康宁",
+            "symbol": "usGLW"
+          },
+          {
+            "name": "Fabrinet",
+            "symbol": "usFN"
+          }
+        ]
+      },
+      "ai_apps": {
+        "name": "美股AI应用",
+        "stocks": [
+          {
+            "name": "Palantir",
+            "symbol": "usPLTR"
+          },
+          {
+            "name": "AppLovin",
+            "symbol": "usAPP"
+          },
+          {
+            "name": "ServiceNow",
+            "symbol": "usNOW"
+          },
+          {
+            "name": "Snowflake",
+            "symbol": "usSNOW"
+          },
+          {
+            "name": "CrowdStrike",
+            "symbol": "usCRWD"
+          }
+        ]
+      },
+      "golden_dragon": {
+        "name": "纳斯达克中国金龙指数",
+        "stocks": [
+          {
+            "name": "中国金龙指数",
+            "symbol": "usHXC"
+          }
+        ]
+      }
+    }
+  }
+}

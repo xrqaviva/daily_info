@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+reports/
+state/*
+!state/.gitkeep
+.yingmi_api_key

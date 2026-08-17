@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "output_dir": "reports",
+  "state_file": "reports/index/state.json",
+  "lock_file": "state/run.lock",
+  "yingmi_key_file": "/Users/aviva/Projects/stock/.yingmi_api_key",
+  "codex_executable": "/Users/aviva/.nvm/versions/node/v24.16.0/bin/codex",
+  "news_tools": ["SearchFinancialNews", "searchRealtimeAiAnalysis"],
+  "codex_news_fallback": {
+    "enabled": true,
+    "minimum_publishable_items": 4,
+    "timeout_seconds": 300
+  }
+}
