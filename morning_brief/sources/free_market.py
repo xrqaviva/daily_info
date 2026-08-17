@@ -342,15 +342,6 @@ def parse_hf_quote(text, *, source, instrument, unit, as_of, url, contract):
         # provider marks the current calendar day on weekends even though the
         # quote is the last session's close; roll back to Friday
         market_date = (parsed_date - datetime.timedelta(days=parsed_date.weekday() - 4)).isoformat()
-    # pre-market provider stamps: on weekday mornings before the US session
-    # opens, providers mark the current calendar day although the quote is
-    # still the last completed session; roll back to that session
-    try:
-        latest_session = latest_completed_nyse_session(as_of).isoformat()
-        if market_date > latest_session:
-            market_date = latest_session
-    except Exception:
-        pass
     cutoff = _cutoff(as_of).isoformat()
     if market_date > cutoff or previous <= 0:
         raise SourceError("international futures date or previous value is invalid")
@@ -618,12 +609,6 @@ def parse_sina_diniw(text, *, as_of, url):
         # DXY trades around the clock; on weekends the provider stamps the
         # current calendar day even though the quote is Friday's session
         market_date = (parsed_date - datetime.timedelta(days=parsed_date.weekday() - 4)).isoformat()
-    try:
-        latest_session = latest_completed_nyse_session(as_of).isoformat()
-        if market_date > latest_session:
-            market_date = latest_session
-    except Exception:
-        pass
     if current <= 0 or previous <= 0 or market_date > _cutoff(as_of).isoformat():
         raise SourceError("Sina DXY values are invalid")
     return Observation(

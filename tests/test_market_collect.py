@@ -127,9 +127,11 @@ class MarketCollectorTests(unittest.TestCase):
             config, as_of="2026-07-24T07:40:00+08:00"
         )
 
-        self.assertEqual(result["quotes"]["nasdaq"].status, "conflict")
+        # pre-market provider stamps (future calendar day) are relabeled to
+        # the completed session so the quote still shows (2026-08-17 rule)
+        self.assertEqual(result["quotes"]["nasdaq"].status, "single_source")
         self.assertEqual(
-            result["quotes"]["nasdaq"].reason, "unexpected_market_date"
+            result["quotes"]["nasdaq"].observations[0].market_date, "2026-07-23"
         )
 
     def test_china_futures_are_verified_from_same_main_continuous_contract(self):

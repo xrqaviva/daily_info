@@ -1,4 +1,5 @@
 import datetime
+from dataclasses import replace as replace_dataclass
 from typing import Dict, Iterable
 from zoneinfo import ZoneInfo
 
@@ -70,7 +71,38 @@ def verify_observations(
     if expected_market_date and any(
         item.market_date != str(expected_market_date) for item in unique
     ):
-        return _result("conflict", unique, "unexpected_market_date")
+        # Providers stamp the current calendar day during pre-market/weekend
+        # windows although the quote is the last completed session. Accept
+        # such future-stamped single-source observations by relabeling them
+        # to the expected session date (bounded to a 3-day skew). Multi-source
+        # date mixes and same-day live quotes still fail as unexpected.
+        expected = str(expected_market_date)
+        if len(unique) == 1:
+            item = unique[0]
+            try:
+                item_date = datetime.date.fromisoformat(item.market_date)
+                expected_date = datetime.date.fromisoformat(expected)
+                as_of = datetime.datetime.fromisoformat(str(item.as_of))
+                ny_time = as_of.astimezone(ZoneInfo("America/New_York"))
+            except (TypeError, ValueError):
+                ny_time = None
+            in_trading = (
+                ny_time is not None
+                and ny_time.weekday() < 5
+                and datetime.time(9, 30) <= ny_time.time() < datetime.time(16, 15)
+            )
+            if (
+                item_date > expected_date
+                and not in_trading
+                and (item_date - expected_date).days <= 3
+            ):
+                # pre-market/weekend provider stamp: relabel to the completed
+                # session so the quote still shows; live intraday stamps fail
+                unique = [replace_dataclass(item, market_date=expected)]
+            else:
+                return _result("conflict", unique, "unexpected_market_date")
+        else:
+            return _result("conflict", unique, "unexpected_market_date")
 
     if len(unique) > 1:
         for field in ("instrument", "market_date", "unit", "contract"):
