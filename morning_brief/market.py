@@ -27,7 +27,45 @@ from .sources.free_market import (
     parse_tencent_gz_quote,
     parse_tradingview_scan,
 )
+from .models import Observation, VerificationResult
 from .verification import rank_sector_extremes, verify_observations
+
+
+def synthesize_index(member_results, *, label):
+    # 等权合成板块指数：成分收盘均值 + 成分涨跌幅均值
+    values = []
+    changes = []
+    dates = set()
+    for result in member_results:
+        observations = getattr(result, "observations", None) or ()
+        if not observations:
+            continue
+        obs = observations[0]
+        if getattr(obs, "value", None) is None:
+            continue
+        values.append(float(obs.value))
+        if getattr(obs, "change_pct", None) is not None:
+            changes.append(float(obs.change_pct))
+        if getattr(obs, "market_date", None):
+            dates.add(str(obs.market_date))
+    if not values:
+        return VerificationResult(status="unavailable", consensus_value=None,
+                                  consensus_change_pct=None, observations=(), reason="no_sources")
+    observation = Observation(
+        source="synthetic",
+        instrument=label,
+        value=round(sum(values) / len(values), 2),
+        previous_value=None,
+        change_pct=round(sum(changes) / len(changes), 2) if changes else None,
+        market_date=sorted(dates)[-1] if dates else "",
+        unit="USD",
+        url="",
+        as_of=None,
+        contract="synthetic equal-weight index",
+    )
+    return VerificationResult(status="single_source", consensus_value=observation.value,
+                              consensus_change_pct=observation.change_pct,
+                              observations=(observation,))
 
 
 class MarketCollector:
@@ -414,9 +452,35 @@ class MarketCollector:
                     "us_group:%s:%s" % (group_key, stock.get("symbol")),
                     item, as_of, errors, expected_market_date,
                 )
+            group_index = None
+            index_cfg = group.get("index")
+            if index_cfg:
+                if index_cfg.get("kind") == "tencent":
+                    item = {
+                        "label": index_cfg.get("label"),
+                        "unit": "USD",
+                        "sources": [{"kind": "tencent", "symbol": index_cfg.get("symbol")}],
+                        "expected_session": "us_previous",
+                        "contract": "US sector index close",
+                    }
+                    group_index = self._collect_one(
+                        "us_group:%s:index" % group_key,
+                        item, as_of, errors, expected_market_date,
+                    )
+                elif index_cfg.get("kind") == "synthetic":
+                    members = [str(value) for value in index_cfg.get("members") or []]
+                    member_quotes = []
+                    for symbol in members:
+                        if symbol not in group_quotes:
+                            continue
+                        member_quotes.append(group_quotes[symbol])
+                    group_index = synthesize_index(
+                        member_quotes, label=index_cfg.get("label"),
+                    )
             stock_groups[group_key] = {
                 "name": group.get("name"),
                 "stocks": group_quotes,
+                "index": group_index,
             }
         return {
             "quotes": quotes,

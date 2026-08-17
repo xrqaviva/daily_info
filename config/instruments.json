@@ -956,7 +956,12 @@
             "name": "希捷",
             "symbol": "usSTX"
           }
-        ]
+        ],
+        "index": {
+          "label": "存储板块指数（费城半导体ETF）",
+          "kind": "tencent",
+          "symbol": "usSOXX"
+        }
       },
       "cpo": {
         "name": "美股光模块/CPO",
@@ -981,7 +986,18 @@
             "name": "Fabrinet",
             "symbol": "usFN"
           }
-        ]
+        ],
+        "index": {
+          "label": "光模块CPO板块指数（分类合成）",
+          "kind": "synthetic",
+          "members": [
+            "usLITE",
+            "usCOHR",
+            "usAAOI",
+            "usGLW",
+            "usFN"
+          ]
+        }
       },
       "ai_apps": {
         "name": "美股AI应用",
@@ -1006,16 +1022,21 @@
             "name": "CrowdStrike",
             "symbol": "usCRWD"
           }
-        ]
+        ],
+        "index": {
+          "label": "AI应用板块指数（人工智能科技ETF）",
+          "kind": "tencent",
+          "symbol": "usAIQ"
+        }
       },
       "golden_dragon": {
         "name": "纳斯达克中国金龙指数",
-        "stocks": [
-          {
-            "name": "中国金龙指数",
-            "symbol": "usHXC"
-          }
-        ]
+        "stocks": [],
+        "index": {
+          "label": "纳斯达克中国金龙指数",
+          "kind": "tencent",
+          "symbol": "usHXC"
+        }
       }
     }
   }

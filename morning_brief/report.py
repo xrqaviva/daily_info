@@ -202,45 +202,53 @@ def _rank_label(direction, index):
 def _render_stock_groups_markdown(market):
     groups = market.get("stock_groups") or {}
     if not groups:
-        return "| 分组 | 状态 |\n|---|---|\n| — | 暂无美股分组行情 |"
-    lines = []
+        return "| 分类 | 状态 |\n|---|---|\n| — | 暂无美股核心股票行情 |"
+    lines = ["| 分类 | 名称 | 最新值 | 变化比例 | 数据日期 | 来源 |",
+             "|---|---|---:|---:|---|---|"]
     for group_key, group in groups.items():
+        category = _md_text(group.get("name") or group_key)
         stocks = group.get("stocks") or {}
-        if not stocks:
-            continue
-        lines.append("**%s**" % group.get("name"))
-        lines.append("")
-        lines.append("| 名称 | 最新值 | 变化比例 | 数据日期 | 来源 |")
-        lines.append("|---|---|---:|---|---|")
+        group_index = group.get("index")
         rows = []
+        if group_index is not None:
+            row = _stock_group_row(group_index, symbol="index")
+            if row:
+                rows.append((category, row))
+                category = ""
         for symbol in sorted(stocks):
-            result = stocks[symbol]
-            observations = getattr(result, "observations", None) or ()
-            obs = observations[0] if observations else None
-            value = getattr(result, "consensus_value", None)
-            change = getattr(result, "consensus_change_pct", None)
-            if value is None and obs is not None:
-                value = getattr(obs, "value", None)
-                change = getattr(obs, "change_pct", None)
-            label = str(getattr(obs, "instrument", "") or symbol)
-            date = str(getattr(obs, "market_date", "") or "")
-            source = str(getattr(obs, "source", "") or "—")
-            url = str(getattr(obs, "url", "") or "")
-            if value is None:
-                rows.append("| %s | — | — | %s | %s |" % (_md_text(label), _md_text(date), _md_text(source)))
-                continue
-            rows.append("| %s | %s | %s | %s | %s |" % (
-                _md_text(label),
-                _number(value),
-                _pct(change) if change is not None else "—",
-                _md_text(date),
-                "[%s](%s)" % (_md_text(source), _md_url(url)) if url.startswith("http") else _md_text(source),
-            ))
+            row = _stock_group_row(stocks[symbol], symbol=symbol)
+            if row:
+                rows.append((category, row))
+                category = ""
         if not rows:
-            rows.append("| — | — | — | — | — |")
-        lines.extend(rows)
-        lines.append("")
-    return "\n".join(lines).rstrip()
+            lines.append("| %s | — | — | — | — | — |" % category)
+            continue
+        for cat, row in rows:
+            lines.append("| %s | %s |" % (cat, row))
+    return "\n".join(lines)
+
+
+def _stock_group_row(result, *, symbol):
+    observations = getattr(result, "observations", None) or ()
+    obs = observations[0] if observations else None
+    value = getattr(result, "consensus_value", None)
+    change = getattr(result, "consensus_change_pct", None)
+    if value is None and obs is not None:
+        value = getattr(obs, "value", None)
+        change = getattr(obs, "change_pct", None)
+    label = str(getattr(obs, "instrument", "") or symbol)
+    date = str(getattr(obs, "market_date", "") or "")
+    source = str(getattr(obs, "source", "") or "—")
+    url = str(getattr(obs, "url", "") or "")
+    if value is None:
+        return "%s | — | — | %s | %s" % (_md_text(label), _md_text(date), _md_text(source))
+    return "%s | %s | %s | %s | %s" % (
+        _md_text(label),
+        _number(value),
+        _pct(change) if change is not None else "—",
+        _md_text(date),
+        "[%s](%s)" % (_md_text(source), _md_url(url)) if url.startswith("http") else _md_text(source),
+    )
 
 
 def _render_sector_markdown(market):
@@ -343,7 +351,7 @@ def _status_lines(model):
     extremes = ((model.get("market") or {}).get("sector_extremes")) or {}
     if extremes.get("single_source_top") or extremes.get("single_source_bottom"):
         lines.append("- 标普500行业ETF板块行情：单源参考")
-        lines.append("- 美股关键分组行情（Mag7/存储/光模块CPO/AI应用/中国金龙）：腾讯单源参考")
+        lines.append("- 美股核心股票行情（Mag7/存储/光模块CPO/AI应用/中国金龙）：腾讯单源/分类合成参考")
     breadth_status = getattr(
         ((model.get("breadth") or {}).get("verification")),
         "status", "unavailable",
@@ -370,7 +378,7 @@ def render_markdown(model):
         lines.extend(["", "## %s" % heading, "", _md_quote_table(quotes, keys)])
         if heading == "美股三大指数":
             lines.extend(["", "### 标普500行业ETF表现前五/后五", "", _render_sector_markdown(market)])
-            lines.extend(["", "### 美股关键分组行情（Mag7/存储/光模块CPO/AI应用/中国金龙）", "", _render_stock_groups_markdown(market)])
+            lines.extend(["", "### 美股核心股票行情（Mag7/存储/光模块CPO/AI应用/中国金龙）", "", _render_stock_groups_markdown(market)])
     lines.extend([
         "", "## 上一交易日A股非ST涨跌家数", "",
         _render_breadth_markdown(
