@@ -199,6 +199,22 @@ def _rank_label(direction, index):
     return "倒数第{}名".format("一二三四五"[index])
 
 
+def _synthetic_sources(obs, member_stocks):
+    members = []
+    for symbol in sorted(member_stocks):
+        result = member_stocks[symbol]
+        member_obs = getattr(result, "observations", None)
+        member_obs = member_obs[0] if member_obs else None
+        if not member_obs or not getattr(member_obs, "url", ""):
+            continue
+        members.append("[%s](%s)" % (
+            _md_text(member_obs.instrument or symbol), _md_url(member_obs.url),
+        ))
+    if not members:
+        return "合成·等权"
+    return "合成·等权（%s）" % " ".join(members)
+
+
 def _render_stock_groups_markdown(market):
     groups = market.get("stock_groups") or {}
     if not groups:
@@ -211,7 +227,9 @@ def _render_stock_groups_markdown(market):
         group_index = group.get("index")
         rows = []
         if group_index is not None:
-            row = _stock_group_row(group_index, symbol="index")
+            row = _stock_group_row(
+                group_index, symbol="index", member_stocks=stocks
+            )
             if row:
                 rows.append((category, row))
                 category = ""
@@ -228,7 +246,7 @@ def _render_stock_groups_markdown(market):
     return "\n".join(lines)
 
 
-def _stock_group_row(result, *, symbol):
+def _stock_group_row(result, *, symbol, member_stocks=None):
     observations = getattr(result, "observations", None) or ()
     obs = observations[0] if observations else None
     value = getattr(result, "consensus_value", None)
@@ -242,12 +260,18 @@ def _stock_group_row(result, *, symbol):
     url = str(getattr(obs, "url", "") or "")
     if value is None:
         return "%s | — | — | %s | %s" % (_md_text(label), _md_text(date), _md_text(source))
+    if source == "synthetic":
+        sources = _synthetic_sources(obs, member_stocks or {})
+    elif url.startswith("http"):
+        sources = "[%s](%s)" % (_md_text(source), _md_url(url))
+    else:
+        sources = _md_text(source)
     return "%s | %s | %s | %s | %s" % (
         _md_text(label),
         _number(value),
         _pct(change) if change is not None else "—",
         _md_text(date),
-        "[%s](%s)" % (_md_text(source), _md_url(url)) if url.startswith("http") else _md_text(source),
+        sources,
     )
 
 

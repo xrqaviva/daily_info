@@ -487,11 +487,9 @@ class MarketCollector:
                         if symbol not in group_quotes:
                             continue
                         member_quotes.append(group_quotes[symbol])
-                    member_symbols = [str(value) for value in index_cfg.get("members") or []]
-                    first_member = member_symbols[0] if member_symbols else ""
                     group_index = synthesize_index(
                         member_quotes, label=index_cfg.get("label"),
-                        url="https://qt.gtimg.cn/q=%s" % quote(first_member, safe="") if first_member else "",
+                        url="",
                     )
             stock_groups[group_key] = {
                 "name": group.get("name"),

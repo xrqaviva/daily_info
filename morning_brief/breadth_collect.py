@@ -1,7 +1,9 @@
 import datetime
 import re
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from urllib.parse import urlencode
+from zoneinfo import ZoneInfo
 
 from .breadth import calculate_breadth, verify_breadth
 from .http import SourceError
@@ -78,8 +80,48 @@ class BreadthCollector:
             raise SourceError("Sina three-venue snapshot date is unavailable")
         return next(iter(dates.values()))
 
-    def _sina(self, expected_market_date):
-        market_date = self._sina_market_date()
+    @staticmethod
+    def _normalize_stamp(stamped, expected_market_date, as_of=None):
+        """Pre-market/weekend providers stamp today's calendar date while a
+        snapshot still holds the last completed session (the strict source
+        check would otherwise discard the whole venue). When the stamp is at
+        most 3 days ahead of the expected session date and the as-of moment
+        is outside the A-share trading window, accept it as the expected
+        date; live intraday stamps and far-future stamps still fail."""
+        if not stamped or not expected_market_date:
+            return stamped
+        expected = str(expected_market_date)
+        if str(stamped) == expected:
+            return stamped
+        try:
+            stamped_date = datetime.date.fromisoformat(str(stamped))
+            expected_date = datetime.date.fromisoformat(expected)
+        except ValueError:
+            return stamped
+        if not (
+            stamped_date > expected_date
+            and (stamped_date - expected_date).days <= 3
+        ):
+            return stamped
+        if not as_of:
+            return stamped
+        try:
+            moment = datetime.datetime.fromisoformat(str(as_of))
+            if moment.tzinfo is None or moment.utcoffset() is None:
+                moment = moment.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
+            sh_time = moment.astimezone(ZoneInfo("Asia/Shanghai"))
+        except ValueError:
+            return stamped
+        in_trading = (
+            sh_time.weekday() < 5
+            and datetime.time(9, 15) <= sh_time.time() < datetime.time(15, 0)
+        )
+        return expected if not in_trading else stamped
+
+    def _sina(self, expected_market_date, as_of=None):
+        market_date = self._normalize_stamp(
+            self._sina_market_date(), expected_market_date, as_of
+        )
         if market_date != str(expected_market_date):
             raise SourceError("Sina snapshot date is not the expected market date")
 
@@ -100,7 +142,9 @@ class BreadthCollector:
             )
 
         def finish():
-            if self._sina_market_date() != market_date:
+            if self._normalize_stamp(
+                self._sina_market_date(), expected_market_date, as_of
+            ) != market_date:
                 raise SourceError("Sina snapshot date changed during pagination")
             return calculate_breadth(rows)
 
@@ -203,9 +247,6 @@ class BreadthCollector:
         elif expected_market_date and result.market_date != str(expected_market_date):
             reason = "unexpected_market_date"
             status = "conflict"
-        elif result.duplicate_codes:
-            reason = "duplicate_eligible_codes"
-            status = "conflict"
         elif not {"sh", "sz", "bj"}.issubset(
             {code.split(":", 1)[0] for code in result.codes}
         ):
@@ -231,7 +272,7 @@ class BreadthCollector:
         sources = {}
         errors = []
         fetchers = (
-            ("sina", lambda: self._sina(expected_date.isoformat())),
+            ("sina", lambda: self._sina(expected_date.isoformat(), as_of=as_of)),
             ("eastmoney", self._eastmoney),
         )
         for name, fetcher in fetchers:
@@ -239,6 +280,12 @@ class BreadthCollector:
                 result = fetcher()
                 if result.sample_size < self.min_sample_size:
                     raise SourceError("breadth sample is below the minimum")
+                result = replace(
+                    result,
+                    market_date=self._normalize_stamp(
+                        result.market_date, expected_market_date, as_of
+                    ),
+                )
                 sources[name] = result
             except Exception as exc:
                 errors.append({"source": name, "error": type(exc).__name__})

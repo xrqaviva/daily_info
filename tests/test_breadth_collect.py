@@ -418,6 +418,92 @@ class BreadthCollectorTests(unittest.TestCase):
         self.assertIsNone(supplemental["market_date"])
         self.assertEqual(result["verification"].status, "verified")
 
+    def test_single_source_premarket_future_stamp_is_relabeled(self):
+        class Client(FakeClient):
+            def get_json(self, url, **kwargs):
+                if "sina" in url:
+                    raise RuntimeError("provider down")
+                if "eastmoney" not in url:
+                    raise AssertionError(url)
+                return {"data": {"total": 3, "diff": [
+                    {"f12": "600001", "f14": "沪股", "f3": 1, "f2": 10, "f124": "2026-07-18"},
+                    {"f12": "000001", "f14": "深股", "f3": -1, "f2": 9, "f124": "2026-07-18"},
+                    {"f12": "920001", "f14": "北股", "f3": 0, "f2": 8, "f124": "2026-07-18"},
+                ]}}
+
+        result = test_collector(Client(), page_size=100).collect(
+            expected_market_date="2026-07-17",
+            as_of="2026-07-17T07:30:00+08:00",
+        )
+
+        self.assertEqual(result["sources"]["eastmoney"].market_date, "2026-07-17")
+        self.assertEqual(result["sources"]["eastmoney"].flat, 1)
+        self.assertEqual(result["verification"].status, "single_source")
+
+    def test_single_source_intraday_future_stamp_stays_conflict(self):
+        class Client(FakeClient):
+            def get_json(self, url, **kwargs):
+                if "sina" in url:
+                    raise RuntimeError("provider down")
+                if "eastmoney" not in url:
+                    raise AssertionError(url)
+                return {"data": {"total": 3, "diff": [
+                    {"f12": "600001", "f14": "沪股", "f3": 1, "f2": 10, "f124": "2026-07-18"},
+                    {"f12": "000001", "f14": "深股", "f3": -1, "f2": 9, "f124": "2026-07-18"},
+                    {"f12": "920001", "f14": "北股", "f3": 0, "f2": 8, "f124": "2026-07-18"},
+                ]}}
+
+        result = test_collector(Client(), page_size=100).collect(
+            expected_market_date="2026-07-17",
+            as_of="2026-07-17T13:30:00+08:00",
+        )
+
+        self.assertEqual(result["verification"].status, "conflict")
+        self.assertEqual(result["verification"].reason, "unexpected_market_date")
+
+    def test_single_source_far_future_stamp_stays_conflict(self):
+        class Client(FakeClient):
+            def get_json(self, url, **kwargs):
+                if "sina" in url:
+                    raise RuntimeError("provider down")
+                if "eastmoney" not in url:
+                    raise AssertionError(url)
+                return {"data": {"total": 3, "diff": [
+                    {"f12": "600001", "f14": "沪股", "f3": 1, "f2": 10, "f124": "2026-07-22"},
+                    {"f12": "000001", "f14": "深股", "f3": -1, "f2": 9, "f124": "2026-07-22"},
+                    {"f12": "920001", "f14": "北股", "f3": 0, "f2": 8, "f124": "2026-07-22"},
+                ]}}
+
+        result = test_collector(Client(), page_size=100).collect(
+            expected_market_date="2026-07-17",
+            as_of="2026-07-22T07:30:00+08:00",
+        )
+
+        self.assertEqual(result["verification"].status, "conflict")
+        self.assertEqual(result["verification"].reason, "unexpected_market_date")
+
+    def test_sina_premarket_future_stamp_passes_date_proof(self):
+        class Client(FakeClient):
+            def __init__(self):
+                super().__init__(fail={"eastmoney"})
+
+            def get_text(self, url, **kwargs):
+                self.urls.append(url)
+                return "\n".join([
+                    'var hq_str_sh000001="上证指数,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2026-07-18,15:30:00,00,";',
+                    'var hq_str_sz399001="深证成指,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2026-07-18,15:00:00,00";',
+                    'var hq_str_bj899050="北证50,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2026-07-18,15:30:00,00,";',
+                ])
+
+        result = test_collector(Client(), page_size=100).collect(
+            expected_market_date="2026-07-17",
+            as_of="2026-07-17T07:30:00+08:00",
+        )
+
+        self.assertIn("sina", result["sources"])
+        self.assertEqual(result["sources"]["sina"].market_date, "2026-07-17")
+        self.assertEqual(result["verification"].status, "single_source")
+
 
 if __name__ == "__main__":
     unittest.main()

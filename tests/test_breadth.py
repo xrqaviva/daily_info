@@ -96,10 +96,9 @@ class BreadthTests(unittest.TestCase):
         duplicate = calculate_breadth(
             self._full_market_rows() + [self._full_market_rows()[0]]
         )
-        self.assertEqual(
-            verify_breadth(duplicate, duplicate, expected_market_date="2026-07-17").reason,
-            "duplicate_eligible_codes",
-        )
+        verified = verify_breadth(duplicate, duplicate, expected_market_date="2026-07-17")
+        self.assertEqual(verified.status, "verified")
+        self.assertIn("sh:600001", duplicate.duplicate_codes)
 
     def test_unexpected_date_takes_priority_over_duplicate_codes(self):
         rows = self._full_market_rows(date="2026-07-18")

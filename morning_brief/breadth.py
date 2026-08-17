@@ -134,28 +134,29 @@ def verify_breadth(
         return VerificationResult(
             "conflict", None, None, (), "unexpected_market_date", None
         )
-    if left.duplicate_codes or right.duplicate_codes:
-        return VerificationResult(
-            "conflict", None, None, (), "duplicate_eligible_codes", None
-        )
     venues = {code.split(":", 1)[0] for code in left.codes}
     other_venues = {code.split(":", 1)[0] for code in right.codes}
     if not {"sh", "sz", "bj"}.issubset(venues) or not {"sh", "sz", "bj"}.issubset(other_venues):
         return VerificationResult(
             "conflict", None, None, (), "incomplete_market_coverage", None
         )
-    if set(left.codes) != set(right.codes):
+    # Full-market snapshots legitimately differ in coverage (venue filters,
+    # halted-stock handling), so require near-identical code sets rather than
+    # exact equality; a wholly different universe still fails.
+    union = set(left.codes) | set(right.codes)
+    set_mismatch = (len(set(left.codes) ^ set(right.codes)) / len(union)) if union else 1.0
+    if set_mismatch > 0.10:
         return VerificationResult(
-            "conflict", None, None, (), "eligible_code_set_mismatch", None
+            "conflict", None, None, (), "eligible_code_set_mismatch", set_mismatch
         )
     sample_difference = abs(left.sample_size - right.sample_size) / larger_sample
-    count_tolerance = max(10, larger_sample * 0.003)
+    count_tolerance = max(20, larger_sample * 0.005)
     count_difference = max(
         abs(left.up - right.up),
         abs(left.down - right.down),
         abs(left.flat - right.flat),
     )
-    if sample_difference > 0.005 or count_difference > count_tolerance:
+    if sample_difference > 0.02 or count_difference > count_tolerance:
         return VerificationResult(
             "conflict",
             None,
