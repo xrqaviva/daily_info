@@ -442,7 +442,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(len(config["sectors"]), 11)
         self.assertEqual(
             set(config["us_stock_groups"]),
-            {"mag7", "storage", "cpo", "ai_apps", "golden_dragon"},
+            {"mag7", "storage", "cpo", "ai_apps", "other", "golden_dragon"},
         )
         for key, item in config.items():
             if key in ("sectors", "supplemental", "us_stock_groups"):
