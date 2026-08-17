@@ -32,7 +32,7 @@ from .models import Observation, VerificationResult
 from .verification import rank_sector_extremes, verify_observations
 
 
-def synthesize_index(member_results, *, label):
+def synthesize_index(member_results, *, label, url=""):
     # 等权合成板块指数：成分收盘均值 + 成分涨跌幅均值
     values = []
     changes = []
@@ -60,7 +60,7 @@ def synthesize_index(member_results, *, label):
         change_pct=round(sum(changes) / len(changes), 2) if changes else None,
         market_date=sorted(dates)[-1] if dates else "",
         unit="USD",
-        url="",
+        url=url,
         as_of=None,
         contract="synthetic equal-weight index",
     )
@@ -487,8 +487,11 @@ class MarketCollector:
                         if symbol not in group_quotes:
                             continue
                         member_quotes.append(group_quotes[symbol])
+                    member_symbols = [str(value) for value in index_cfg.get("members") or []]
+                    first_member = member_symbols[0] if member_symbols else ""
                     group_index = synthesize_index(
                         member_quotes, label=index_cfg.get("label"),
+                        url="https://qt.gtimg.cn/q=%s" % quote(first_member, safe="") if first_member else "",
                     )
             stock_groups[group_key] = {
                 "name": group.get("name"),
