@@ -955,12 +955,27 @@
           {
             "name": "希捷",
             "symbol": "usSTX"
+          },
+          {
+            "name": "SK海力士",
+            "symbol": "usSKHY"
+          },
+          {
+            "name": "西测测试",
+            "symbol": "sz301306",
+            "unit": "CNY",
+            "source": "sina_a"
           }
         ],
         "index": {
-          "label": "存储板块指数（费城半导体ETF）",
-          "kind": "tencent",
-          "symbol": "usSOXX"
+          "label": "存储板块指数（分类合成）",
+          "kind": "synthetic",
+          "members": [
+            "usMU",
+            "usSNDK",
+            "usSTX",
+            "usSKHY"
+          ]
         }
       },
       "cpo": {
@@ -1028,6 +1043,35 @@
           "kind": "tencent",
           "symbol": "usAIQ"
         }
+      },
+      "other": {
+        "name": "其他核心股票",
+        "stocks": [
+          {
+            "name": "SpaceX",
+            "symbol": "usSPCX"
+          },
+          {
+            "name": "英特尔",
+            "symbol": "usINTC"
+          },
+          {
+            "name": "AMD",
+            "symbol": "usAMD"
+          },
+          {
+            "name": "博通",
+            "symbol": "usAVGO"
+          },
+          {
+            "name": "台积电",
+            "symbol": "usTSM"
+          },
+          {
+            "name": "ARM",
+            "symbol": "usARM"
+          }
+        ]
       },
       "golden_dragon": {
         "name": "纳斯达克中国金龙指数",

@@ -560,6 +560,37 @@ def parse_tencent_gz_quote(text, *, symbol, instrument, unit, as_of, url,
     )
 
 
+def parse_sina_a_share(text, *, instrument, unit, url, as_of, contract=None):
+    """新浪A股行情（hq.sinajs.cn）：fields 0=名称 1=今开 2=昨收 3=现价 30=日期 31=时间。"""
+    match = re.search(r'hq_str_[a-z]+\d+="([^"]*)"', str(text or ""))
+    if not match:
+        raise SourceError("Sina A-share quote is missing")
+    fields = match.group(1).split(",")
+    if len(fields) < 32:
+        raise SourceError("Sina A-share quote is incomplete")
+    current = _number(fields[3], "Sina A-share current")
+    previous = _number(fields[2], "Sina A-share previous")
+    market_date = str(fields[30]).strip()[:10]
+    try:
+        datetime.date.fromisoformat(market_date)
+    except ValueError:
+        raise SourceError("Sina A-share date is invalid")
+    if current <= 0 or previous <= 0 or market_date > _cutoff(as_of).isoformat():
+        raise SourceError("Sina A-share values are invalid")
+    return Observation(
+        source="sina",
+        instrument=instrument,
+        value=current,
+        previous_value=previous,
+        change_pct=round((current / previous - 1) * 100, 2),
+        market_date=market_date,
+        unit=unit,
+        url=url,
+        as_of=as_of,
+        contract=contract or "A-share stock close",
+    )
+
+
 def parse_sina_diniw(text, *, as_of, url):
     match = re.search(r'hq_str_DINIW="([^"]*)"', str(text or ""))
     if not match:

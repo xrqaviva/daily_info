@@ -13,6 +13,7 @@ from .sources.tungsten import (
     parse_smm_tungsten_rows,
 )
 from .sources.free_market import (
+    parse_sina_a_share,
     latest_completed_international_session,
     latest_completed_nyse_session,
     parse_boc_cross_rates,
@@ -217,6 +218,18 @@ class MarketCollector:
             return parse_hf_quote(
                 text, source=provider, instrument=instrument, unit=unit,
                 as_of=as_of, url=url, contract=contract or "provider_continuous",
+            )
+        if kind == "sina_a":
+            url = "https://hq.sinajs.cn/list=%s" % quote(symbol, safe="")
+            return parse_sina_a_share(
+                self.client.get_text(
+                    url, headers={"Referer": "https://finance.sina.com.cn"}
+                ),
+                instrument=instrument,
+                unit=unit,
+                url=url,
+                as_of=as_of,
+                contract=contract,
             )
         if kind == "sina_diniw":
             url = "https://hq.sinajs.cn/list=DINIW"
@@ -443,8 +456,8 @@ class MarketCollector:
             for stock in group.get("stocks") or []:
                 item = {
                     "label": stock.get("name"),
-                    "unit": "USD",
-                    "sources": [{"kind": "tencent", "symbol": stock.get("symbol")}],
+                    "unit": stock.get("unit") or "USD",
+                    "sources": [{"kind": stock.get("source") or "tencent", "symbol": stock.get("symbol")}],
                     "expected_session": "us_previous",
                     "contract": "US stock close",
                 }
