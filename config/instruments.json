@@ -942,7 +942,7 @@
         ]
       },
       "storage": {
-        "name": "美股存储三巨头",
+        "name": "美股存储",
         "stocks": [
           {
             "name": "美光",
@@ -953,7 +953,7 @@
             "symbol": "usSNDK"
           },
           {
-            "name": "希捷",
+            "name": "希捷科技",
             "symbol": "usSTX"
           },
           {
@@ -961,10 +961,13 @@
             "symbol": "usSKHY"
           },
           {
-            "name": "西测测试",
-            "symbol": "sz301306",
-            "unit": "CNY",
-            "source": "sina_a"
+            "name": "西部数据",
+            "symbol": "usWDC"
+          },
+          {
+            "name": "铠侠",
+            "symbol": "jp285A",
+            "unit": "JPY"
           }
         ],
         "index": {
@@ -974,7 +977,8 @@
             "usMU",
             "usSNDK",
             "usSTX",
-            "usSKHY"
+            "usSKHY",
+            "usWDC"
           ]
         }
       },
