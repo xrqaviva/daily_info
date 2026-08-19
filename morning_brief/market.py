@@ -1,4 +1,5 @@
 import datetime
+from dataclasses import replace
 from urllib.parse import quote
 
 from .http import SourceError
@@ -367,17 +368,34 @@ class MarketCollector:
         observations = []
         for source in item.get("sources") or []:
             try:
-                observations.append(
-                    self._fetch(
-                        source,
-                        instrument=item.get("label") or key,
-                        unit=item.get("unit") or "unknown",
-                        as_of=as_of,
-                        contract=source.get("contract", item.get("contract")),
-                        expected_market_date=required_date,
-                        market_calendar=item.get("market_calendar"),
+                display = source.get("display_url")
+                if display:
+                    observations.append(
+                        replace(
+                            self._fetch(
+                                source,
+                                instrument=item.get("label") or key,
+                                unit=item.get("unit") or "unknown",
+                                as_of=as_of,
+                                contract=source.get("contract", item.get("contract")),
+                                expected_market_date=required_date,
+                                market_calendar=item.get("market_calendar"),
+                            ),
+                            url=display,
+                        )
                     )
-                )
+                else:
+                    observations.append(
+                        self._fetch(
+                            source,
+                            instrument=item.get("label") or key,
+                            unit=item.get("unit") or "unknown",
+                            as_of=as_of,
+                            contract=source.get("contract", item.get("contract")),
+                            expected_market_date=required_date,
+                            market_calendar=item.get("market_calendar"),
+                        )
+                    )
             except Exception as exc:
                 errors.append({
                     "instrument": key,
