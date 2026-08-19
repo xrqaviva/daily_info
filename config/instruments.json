@@ -969,18 +969,7 @@
             "symbol": "jp285A",
             "unit": "JPY"
           }
-        ],
-        "index": {
-          "label": "存储板块指数（分类合成）",
-          "kind": "synthetic",
-          "members": [
-            "usMU",
-            "usSNDK",
-            "usSTX",
-            "usSKHY",
-            "usWDC"
-          ]
-        }
+        ]
       },
       "cpo": {
         "name": "美股光模块/CPO",
