@@ -1021,18 +1021,7 @@
             "name": "Fabrinet",
             "symbol": "usFN"
           }
-        ],
-        "index": {
-          "label": "光模块CPO板块指数（分类合成）",
-          "kind": "synthetic",
-          "members": [
-            "usLITE",
-            "usCOHR",
-            "usAAOI",
-            "usGLW",
-            "usFN"
-          ]
-        }
+        ]
       },
       "ai_apps": {
         "name": "美股AI应用",
