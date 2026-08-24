@@ -423,13 +423,16 @@ def parse_sina_global_history(text, *, instrument, unit, as_of, url, contract,
                     _number(value, "Sina global OHLC") for value in raw_ohlc
                 )
                 tolerance = max(abs(closing) * 1e-9, 1e-9)
-                if (
-                    low > high + tolerance
-                    or opening < low - tolerance
-                    or opening > high + tolerance
-                    or closing < low - tolerance
-                    or closing > high + tolerance
-                ):
+                if low > high + tolerance:
+                    continue
+                if closing < low - tolerance or closing > high + tolerance:
+                    continue
+                # open 允许小幅偏离 [low,high]（新浪 LME 偶发电子盘开盘与场内
+                # 最低价的毫级矛盾，如 AHD 2026-08-21 open<low 0.1%），但大幅
+                # 脱离区间即跨合约换月行，必须整行拒绝（AGENTS.md 第3条，
+                # 见 test_sina_global_history_rejects_impossible_ohlc_roll_row）。
+                open_tolerance = max(abs(closing) * 0.02, tolerance)
+                if opening < low - open_tolerance or opening > high + open_tolerance:
                     continue
             close = round(close_value * scale, 10)
         except (AttributeError, TypeError, ValueError, SourceError):

@@ -7,7 +7,8 @@ from morning_brief.numeric import finite_float
 
 
 def parse_sina_futures_daily(
-    text, *, instrument, unit, url, as_of, contract=None
+    text, *, instrument, unit, url, as_of, contract=None,
+    expected_market_date=None,
 ):
     raw = str(text or "")
     start = raw.find("(")
@@ -22,6 +23,13 @@ def parse_sina_futures_daily(
         cutoff = datetime.datetime.fromisoformat(str(as_of)).date().isoformat()
     except ValueError:
         cutoff = None
+    # 只认已完成交易日（与 eastmoney_futures 同规则）
+    from morning_brief.sources.eastmoney_futures import completed_session_cutoff
+    strict = completed_session_cutoff(as_of)
+    if strict:
+        cutoff = min(cutoff, strict) if cutoff else strict
+    if expected_market_date:
+        cutoff = min(cutoff, str(expected_market_date)) if cutoff else str(expected_market_date)
     rows = []
     for row in payload if isinstance(payload, list) else []:
         try:
