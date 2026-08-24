@@ -375,7 +375,7 @@ def _status_lines(model):
     extremes = ((model.get("market") or {}).get("sector_extremes")) or {}
     if extremes.get("single_source_top") or extremes.get("single_source_bottom"):
         lines.append("- 标普500行业ETF板块行情：单源参考")
-        lines.append("- 美股核心股票行情（Mag7/存储/光模块CPO/AI应用/中国金龙）：腾讯单源/分类合成参考")
+        lines.append("- 美股核心股票行情（Mag7/存储/光模块CPO/AI应用/中国金龙）：腾讯单源")
     breadth_status = getattr(
         ((model.get("breadth") or {}).get("verification")),
         "status", "unavailable",
