@@ -1084,7 +1084,48 @@
       },
       "golden_dragon": {
         "name": "纳斯达克中国金龙指数",
-        "stocks": [],
+        "stocks": [
+          {
+            "name": "阿里巴巴",
+            "symbol": "usBABA"
+          },
+          {
+            "name": "拼多多",
+            "symbol": "usPDD"
+          },
+          {
+            "name": "京东",
+            "symbol": "usJD"
+          },
+          {
+            "name": "百度",
+            "symbol": "usBIDU"
+          },
+          {
+            "name": "网易",
+            "symbol": "usNTES"
+          },
+          {
+            "name": "理想汽车",
+            "symbol": "usLI"
+          },
+          {
+            "name": "小鹏集团",
+            "symbol": "usXPEV"
+          },
+          {
+            "name": "蔚来",
+            "symbol": "usNIO"
+          },
+          {
+            "name": "腾讯音乐",
+            "symbol": "usTME"
+          },
+          {
+            "name": "哔哩哔哩",
+            "symbol": "usBILI"
+          }
+        ],
         "index": {
           "label": "纳斯达克中国金龙指数",
           "kind": "tencent",
