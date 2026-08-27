@@ -124,6 +124,9 @@ class VerificationTests(unittest.TestCase):
         self.assertEqual(result.reason, "unexpected_market_date")
 
     def test_mixed_expected_and_live_dates_are_classified_as_unexpected(self):
+        # 数据日期（07-24）晚于采集日（07-18）本身即 future 数据错误，
+        # 保持 conflict（future_market_date）语义；与 2026-08-27 美元指数修复
+        # 的场景（as_of 当日、观测为历史日）不同。
         result = verify_observations(
             [
                 obs("history", 100, 1, date="2026-07-24"),
@@ -133,7 +136,7 @@ class VerificationTests(unittest.TestCase):
         )
 
         self.assertEqual(result.status, "conflict")
-        self.assertEqual(result.reason, "unexpected_market_date")
+        self.assertEqual(result.reason, "future_market_date")
 
     def test_collection_age_is_measured_in_shanghai_and_requires_timezone(self):
         dated = dataclasses.replace(

@@ -35,6 +35,12 @@ details.status ul{margin:0 0 10px;padding-left:20px}
 details.status li{margin:3px 0;color:var(--muted)}
 table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 .table-wrap{width:100%;overflow-x:auto}
+.trend td{vertical-align:middle}
+td.trend{min-width:96px;padding:2px 6px!important}
+.sparkline{display:block}
+.sparkline polyline{fill:none;stroke-width:1.4;vector-effect:non-scaling-stroke}
+.spark-up polyline{stroke:var(--up,#d9384a)}
+.spark-down polyline{stroke:var(--down,#0c8f5e)}
 th{position:sticky;top:0;background:var(--card-2);color:var(--muted);font-size:12.5px;font-weight:600;letter-spacing:.3px;z-index:1}
 th,td{padding:9px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
 tbody tr:hover td{background:rgba(23,105,170,.05)}
@@ -152,6 +158,19 @@ def _cell(header, cell_text):
         css = "src"
     else:
         css = ""
+    if cell_text and str(cell_text).startswith("SPARK:"):
+        # 月趋势迷你折线图：SPARK|date,close;date,close 数据 -> SVG
+        raw = str(cell_text)[6:].strip()
+        points = []
+        for pair in raw.split(";"):
+            if not pair:
+                continue
+            date, _, close = pair.partition(",")
+            points.append((date, close))
+        svg = sparkline_svg(points)
+        if svg:
+            return '<td class="trend">%s</td>' % svg
+        return '<td class="trend">—</td>'
     content = _inline(cell_text)
     return '<td class="%s">%s</td>' % (css, content) if css else "<td>%s</td>" % content
 
@@ -185,6 +204,45 @@ def _status_item_html(item):
                 _inline(label), css, _inline(status),
             )
     return "<li>%s</li>" % _inline(item)
+
+
+
+def sparkline_svg(points, width=92, height=28):
+    """近 30 点收盘序列 -> 内联 SVG 迷你折线（月趋势列，HTML 用）。"""
+    values = [float(value) for _date, value in points if value is not None]
+    if len(values) < 2:
+        return ""
+    low, high = min(values), max(values)
+    span = high - low
+    if span <= 0:
+        span = max(abs(high) * 1e-6, 1e-9)
+    step_x = width / (len(values) - 1)
+    coords = []
+    for index, value in enumerate(values):
+        x = round(index * step_x, 2)
+        y = round(height - 2 - (value - low) / span * (height - 4), 2)
+        coords.append("%s,%s" % (x, y))
+    direction = "up" if values[-1] >= values[0] else "down"
+    return (
+        '<svg class="sparkline spark-%s" viewBox="0 0 %d %d" width="%d" height="%d" '
+        'preserveAspectRatio="none" aria-label="月趋势迷你图">'
+        '<polyline points="%s" fill="none" vector-effect="non-scaling-stroke"/></svg>'
+        % (direction, width, height, width, height, " ".join(coords))
+    )
+
+
+def sparkline_ascii(points, width=14):
+    """近 30 点收盘序列 -> ASCII 迷你柱（月趋势列，Markdown/终端用）。"""
+    values = [float(value) for _date, value in points if value is not None]
+    if len(values) < 2:
+        return ""
+    low, high = min(values), max(values)
+    span = high - low
+    if span <= 0:
+        span = max(abs(high) * 1e-6, 1e-9)
+    levels = "▁▂▃▄▅▆▇█"
+    sampled = values[::max(1, len(values) // width)][:width]
+    return "".join(levels[min(7, int((value - low) / span * 8))] for value in sampled)
 
 
 def md_to_html(markdown):

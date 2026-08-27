@@ -33,6 +33,7 @@ INSTRUMENT_LABELS = {
     "silver": "COMEX白银",
     "spot_gold": "现货黄金",
     "spot_silver": "现货白银",
+    "btc_usd": "比特币",
     "brent": "布伦特原油",
     "natgas": "美国天然气",
     "platinum": "纽约铂金",
@@ -67,12 +68,26 @@ INSTRUMENT_LABELS = {
     "selenium": "99.99%硒锭（SMM）",
 }
 
+def _monthly_cell(market, key, default=None):
+    """取品种月序列并输出月趋势单元格内容。
+
+    Markdown/HTML 双轨（2026-08-27 新增列）：
+    - 有数据：输出 "SPARK|<date,close;date,close;…"，HTML 渲染为 SVG 迷你折线。
+    - 无数据：返回 "—"（不伪造）。
+    """
+    series = ((market or {}).get("monthly_series") or {}).get(key) or []
+    pairs = ["%s,%s" % (date, close) for date, close in series if close is not None]
+    if len(pairs) < 2:
+        return "—"
+    return "SPARK:" + ";".join(pairs)
+
+
 SECTION_KEYS = (
     ("美股三大指数", ("sp500", "nasdaq", "dow")),
     ("欧洲市场", ("ftse100", "cac40", "dax")),
     ("美元指数", ("dxy",)),
     ("官方日度参考汇率", ("usdcny", "usdeur", "usdjpy", "usdgbp")),
-    ("现货价格", ("spot_gold", "spot_silver", "lme_copper", "lme_aluminum", "lme_zinc", "lme_lead", "lme_nickel", "lme_tin", "tungsten", "ferromolybdenum_smm", "antimony", "bismuth", "gallium", "germanium", "indium", "magnesium", "selenium")),
+    ("现货价格", ("spot_gold", "spot_silver", "btc_usd", "lme_copper", "lme_aluminum", "lme_zinc", "lme_lead", "lme_nickel", "lme_tin", "tungsten", "ferromolybdenum_smm", "antimony", "bismuth", "gallium", "germanium", "indium", "magnesium", "selenium")),
     ("期货价格", ("gold", "silver", "copper", "platinum", "palladium", "wti", "brent", "natgas", "shfe_gold", "shfe_silver", "shfe_copper", "aluminum", "shfe_zinc", "shfe_lead", "shfe_nickel", "shfe_tin", "ine_crude", "iron_ore")),
 )
 
@@ -177,19 +192,22 @@ def _md_sources(observations):
     )
 
 
-def _md_quote_table(quotes, keys):
-    lines = ["| 品种 | 最新值 | 绝对变化 | 变化比例 | 数据日期 | 来源 |", "|---|---:|---:|---:|---|---|"]
+def _md_quote_table(market, keys):
+    lines = ["| 品种 | 最新值 | 绝对变化 | 变化比例 | 月趋势 | 数据日期 | 来源 |",
+             "|---|---:|---:|---:|---|---:|---|"]
+    quotes = (market or {}).get("quotes") or {}
     for key in keys:
         result = quotes.get(key)
         if result is None:
             continue
         _status, value, absolute, change, date, observations = _result_parts(result)
         label = _md_text(INSTRUMENT_LABELS.get(key, key))
-        lines.append("| %s | %s | %s | %s | %s | %s |" % (
-            label, value, absolute, change, date, _md_sources(observations),
+        lines.append("| %s | %s | %s | %s | %s | %s | %s |" % (
+            label, value, absolute, change, _monthly_cell(market, key),
+            date, _md_sources(observations),
         ))
     if len(lines) == 2:
-        lines.append("| — | — | — | — | — | — |")
+        lines.append("| — | — | — | — | — | — | — |")
     return "\n".join(lines)
 
 
@@ -219,34 +237,41 @@ def _render_stock_groups_markdown(market):
     groups = market.get("stock_groups") or {}
     if not groups:
         return "| 分类 | 状态 |\n|---|---|\n| — | 暂无美股核心股票行情 |"
-    lines = ["| 分类 | 名称 | 最新值 | 变化比例 | 数据日期 | 来源 |",
-             "|---|---|---:|---:|---|---|"]
+    lines = ["| 分类 | 名称 | 最新值 | 变化比例 | 月趋势 | 数据日期 | 来源 |",
+             "|---|---|---:|---:|---|---:|---|"]
     for group_key, group in groups.items():
         category = _md_text(group.get("name") or group_key)
         stocks = group.get("stocks") or {}
         group_index = group.get("index")
         rows = []
         if group_index is not None:
+            series_key = "us_group:%s:index" % group_key
             row = _stock_group_row(
-                group_index, symbol="index", member_stocks=stocks
+                group_index, symbol="index", member_stocks=stocks,
+                trend=_monthly_cell(market, series_key),
             )
             if row:
                 rows.append((category, row))
                 category = ""
         for symbol in sorted(stocks):
-            row = _stock_group_row(stocks[symbol], symbol=symbol)
+            series_key = "us_group:%s:%s" % (group_key, symbol)
+            row = _stock_group_row(
+                stocks[symbol], symbol=symbol,
+                trend=_monthly_cell(market, series_key),
+            )
             if row:
                 rows.append((category, row))
                 category = ""
         if not rows:
-            lines.append("| %s | — | — | — | — | — |" % category)
+            lines.append("| %s | — | — | — | — | — | — |" % category)
             continue
         for cat, row in rows:
             lines.append("| %s | %s |" % (cat, row))
+
     return "\n".join(lines)
 
 
-def _stock_group_row(result, *, symbol, member_stocks=None):
+def _stock_group_row(result, *, symbol, member_stocks=None, trend=None):
     observations = getattr(result, "observations", None) or ()
     obs = observations[0] if observations else None
     value = getattr(result, "consensus_value", None)
@@ -259,17 +284,20 @@ def _stock_group_row(result, *, symbol, member_stocks=None):
     source = str(getattr(obs, "source", "") or "—")
     url = str(getattr(obs, "url", "") or "")
     if value is None:
-        return "%s | — | — | %s | %s" % (_md_text(label), _md_text(date), _md_text(source))
+        return "%s | — | — | %s | %s | %s" % (
+            _md_text(label), trend or "—", _md_text(date), _md_text(source))
+
     if source == "synthetic":
         sources = _synthetic_sources(obs, member_stocks or {})
     elif url.startswith("http"):
         sources = "[%s](%s)" % (_md_text(source), _md_url(url))
     else:
         sources = _md_text(source)
-    return "%s | %s | %s | %s | %s" % (
+    return "%s | %s | %s | %s | %s | %s" % (
         _md_text(label),
         _number(value),
         _pct(change) if change is not None else "—",
+        trend or "—",
         _md_text(date),
         sources,
     )
@@ -399,7 +427,7 @@ def render_markdown(model):
         "> 规则：只有同口径、同日期的两个独立来源在容差内才显示共识值；普通冲突或单源会列原值，交易日不符的盘中值仅保留日期与来源证据、不进入主表。",
     ]
     for heading, keys in SECTION_KEYS:
-        lines.extend(["", "## %s" % heading, "", _md_quote_table(quotes, keys)])
+        lines.extend(["", "## %s" % heading, "", _md_quote_table(market, keys)])
         if heading == "美股三大指数":
             lines.extend(["", "### 标普500行业ETF表现前五/后五", "", _render_sector_markdown(market)])
             lines.extend(["", "### 美股核心股票行情（Mag7/存储/光模块CPO/AI应用/中国金龙）", "", _render_stock_groups_markdown(market)])

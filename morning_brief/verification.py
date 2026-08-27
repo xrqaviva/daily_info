@@ -62,11 +62,22 @@ def verify_observations(
         for item in unique:
             by_date.setdefault(item.market_date, []).append(item)
         if len(by_date) > 1:
-            groups = sorted(by_date.values(), key=len, reverse=True)
-            majority = groups[0]
-            rest = sum(len(group) for group in groups[1:])
-            if len(majority) >= 2 and len(majority) > rest:
-                unique = list(majority)
+            # 2026-08-27 用户报告：美元指数双源日期 08-26/08-27 不一致被判空。
+            # expected_market_date 已知时，日期与预期一致的源优先（盘前预刻戳
+            # 的当日源不得覆盖最近已完成交易日口径——AGENTS.md 第3/11条）；
+            # 仅剩该组即按单源/双源正常校验，不再误报 conflict。
+            expected_group = None
+            if expected_market_date:
+                expected_group = by_date.get(str(expected_market_date))
+            if expected_group is not None:
+                # 日期与预期一致的源无条件优先（预刻戳/滞后源不参与竞争）
+                unique = list(expected_group)
+            else:
+                groups = sorted(by_date.values(), key=len, reverse=True)
+                majority = groups[0]
+                rest = sum(len(group) for group in groups[1:])
+                if len(majority) >= 2 and len(majority) > rest:
+                    unique = list(majority)
 
     if expected_market_date and any(
         item.market_date != str(expected_market_date) for item in unique

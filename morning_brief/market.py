@@ -1,8 +1,10 @@
 import datetime
+import json
 from dataclasses import replace
 from urllib.parse import quote
 
 from .http import SourceError
+from .sources.binance import parse_binance_klines, parse_binance_ticker
 from .sources.stooq import parse_stooq_csv
 from .sources.sina_futures import parse_sina_futures_daily
 from .sources.eastmoney_futures import parse_eastmoney_futures
@@ -30,6 +32,7 @@ from .sources.free_market import (
     parse_tradingview_scan,
 )
 from .models import Observation, VerificationResult
+from .numeric import finite_float
 from .verification import rank_sector_extremes, verify_observations
 
 
@@ -144,6 +147,17 @@ class MarketCollector:
                 return self._batch_cache[cache_key][symbol]
             except KeyError:
                 raise SourceError("ECB FX symbol is unsupported")
+        if kind == "binance":
+            symbol = str(source.get("symbol") or "BTCUSDT")
+            ticker_url = "https://api.binance.com/api/v3/ticker/24hr?symbol=%s" % quote(symbol, safe="")
+            return parse_binance_ticker(
+                self.client.get_json(ticker_url),
+                instrument=instrument,
+                unit=unit,
+                as_of=as_of,
+                url=ticker_url,
+                contract=contract or "spot btc usd",
+            )
         if kind == "cboe":
             url = str(source.get("url") or "https://cdn.cboe.com/api/global/us_indices/daily_prices/SPX_History.csv")
             cache_key = ("cboe", url)
@@ -415,6 +429,91 @@ class MarketCollector:
             expected_market_date=required_date,
         )
 
+    def _monthly_series(self, symbol, kind, *, unit="USD"):
+        """近 30 个自然日的日收序列 [(date, close)]；通道不可用时返回空列表。
+
+        2026-08-27 新增：外围表格"月趋势"迷你折线图数据源。
+        通道按 kind 分发，失败/缺失一律返回 []（渲染层显示"—"，不伪造）。
+        """
+        try:
+            if kind == "tencent" and symbol.startswith("us"):
+                # 美股指数/个股走新浪美股日K（腾讯 fqkline 对美股仅回 2 行）
+                us_symbol = symbol[2:].lower()
+                if us_symbol in ("inx", "ixic", "dji"):
+                    us_symbol = "." + us_symbol
+                url = (
+                    "https://stock.finance.sina.com.cn/usstock/api/jsonp.php/"
+                    "var%20t=/US_MinKService.getDailyK?symbol={}"
+                ).format(quote(us_symbol, safe="."))
+                raw = self.client.get_text(url)
+                start, end = raw.find("["), raw.rfind("]")
+                if start < 0 or end <= start:
+                    return []
+                payload = json.loads(raw[start:end + 1])
+                rows = []
+                for item in payload if isinstance(payload, list) else []:
+                    # 新浪美股日K字段：d=日期, c=收盘
+                    try:
+                        date = str(item.get("d") or "")[:10]
+                        close = finite_float(item.get("c"))
+                    except (AttributeError, TypeError, ValueError):
+                        continue
+                    if date and close and close > 0:
+                        rows.append((date, close))
+                return rows[-30:]
+            if kind == "binance":
+                url = "https://api.binance.com/api/v3/klines?symbol=%s&interval=1d&limit=30" % quote(symbol, safe="")
+                return parse_binance_klines(
+                    self.client.get_json(url), limit=30
+                )
+            if kind in ("sina_global_history", "eastmoney_global_history"):
+                # 全球商品/金属/指数日K序列（同 fetch_sina/em 历史方法，取近30日收）
+                rows = []
+                if kind == "sina_global_history":
+                    url = (
+                        "https://stock2.finance.sina.com.cn/futures/api/jsonp.php/"
+                        "var=/GlobalFuturesService.getGlobalFuturesDailyKLine?symbol={}"
+                    ).format(quote(symbol, safe=""))
+                    raw = self.client.get_text(url)
+                    start, end = raw.find("["), raw.rfind("]")
+                    if start < 0 or end <= start:
+                        return []
+                    payload = json.loads(raw[start:end + 1])
+                    for item in payload if isinstance(payload, list) else []:
+                        try:
+                            date = str(item.get("date") or "")[:10]
+                            close = finite_float(item.get("close"))
+                        except (AttributeError, TypeError, ValueError):
+                            continue
+                        if date and close and close > 0:
+                            rows.append((date, close))
+                else:
+                    url = (
+                        "https://push2his.eastmoney.com/api/qt/stock/kline/get"
+                        "?secid={}&klt=101&fqt=1&lmt=30&end=20500000&iscca=1"
+                        "&fields1=f1%2Cf2%2Cf3&fields2=f51%2Cf53"
+                        "&ut=f057cbcbce2a86e2866ab8877db1d059&forcect=1"
+                    ).format(quote(symbol, safe="."))
+                    payload = self.client.get_json(
+                        url, headers={"Referer": "https://quote.eastmoney.com/"})
+                    for raw_row in ((payload.get("data") or {}).get("klines") or []):
+                        fields = str(raw_row).split(",")
+                        if len(fields) < 2:
+                            continue
+                        try:
+                            date = fields[0][:10]
+                            close = finite_float(fields[1])
+                        except (TypeError, ValueError):
+                            continue
+                        if date and close and close > 0:
+                            rows.append((date, close))
+                return rows[-30:]
+            if kind in ("tencent_gz",):
+                return []
+        except Exception:
+            return []
+        return []
+
     def collect(self, config, *, as_of, expected_market_date=None):
         self._batch_cache = {}
         errors = []
@@ -514,11 +613,37 @@ class MarketCollector:
                 "stocks": group_quotes,
                 "index": group_index,
             }
+        # 月趋势序列：quotes 各品种 + 美股核心股票（指数行与个股），通道不可用返回 []
+        monthly = {}
+        for key, item in (config or {}).items():
+            if key in ("sectors", "supplemental", "us_stock_groups"):
+                continue
+            first = ((item.get("sources") or [{}])[0] or {})
+            kind = first.get("kind")
+            symbol = first.get("symbol")
+            if kind and symbol:
+                monthly.setdefault(key, self._monthly_series(symbol, kind))
+        for group_key, group in ((config or {}).get("us_stock_groups") or {}).items():
+            for stock in group.get("stocks") or []:
+                symbol = stock.get("symbol")
+                if symbol:
+                    monthly.setdefault(
+                        "us_group:%s:%s" % (group_key, symbol),
+                        self._monthly_series(symbol, "tencent"),
+                    )
+            index_cfg = group.get("index") or {}
+            if index_cfg.get("kind") == "tencent" and index_cfg.get("symbol"):
+                symbol = index_cfg.get("symbol")
+                monthly.setdefault(
+                    "us_group:%s:index" % group_key,
+                    self._monthly_series(symbol, "tencent"),
+                )
         return {
             "quotes": quotes,
             "sectors": sectors,
             "sector_extremes": rank_sector_extremes(sectors, limit=5),
             "supplemental": supplemental,
             "stock_groups": stock_groups,
+            "monthly_series": monthly,
             "errors": errors,
         }

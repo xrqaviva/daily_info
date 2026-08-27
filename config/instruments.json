@@ -1132,6 +1132,20 @@
           "symbol": "usHXC"
         }
       }
+    },
+    "btc_usd": {
+      "label": "比特币",
+      "unit": "USD",
+      "value_tolerance": 0.02,
+      "expected_session": "always",
+      "sources": [
+        {
+          "kind": "binance",
+          "symbol": "BTCUSDT",
+          "contract": "spot btc usd",
+          "display_url": "https://www.binance.com/price/bitcoin"
+        }
+      ]
     }
   }
 }
